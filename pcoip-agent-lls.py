@@ -1,13 +1,3 @@
-'''
-.. copyright: Copyright 2020 Teradici Corporation
-
-All Rights Reserved
-
-No portions of this material may be reproduced in any form without the
-written permission of Teradici Corporation.  All information contained
-in this document is Teradici Corporation company private, proprietary,
-and trade secret.
-'''
 from functools import partial
 import os
 import requests
@@ -17,6 +7,7 @@ import argparse
 from dotenv import load_dotenv
 import json
 import jsonstreams
+import warnings
 load_dotenv()
 
 
@@ -41,6 +32,23 @@ def ranged_integer(label, min_val, max_val, value):
 
     return int(value)
 
+def validate_lls_url(value):
+    '''
+    Simple validator for lls url against http or https. Warning is issued if
+    using http.
+    '''
+    if not value.startswith('http://') and not value.startswith('https://'):
+        msg = "Please provide lls-url in the format https://<lss-address>:<port>"
+        raise argparse.ArgumentTypeError(msg)
+
+    if value.startswith('http://'):
+        msg = '''\n
+        Teradici highly recommends setting up the Local License Server as an HTTPS 
+        server otherwise the username and password are transmitted in clear text
+        \n'''
+        warnings.warn(msg)
+
+    return value
 
 def environ_or_required(key):
     '''
@@ -65,7 +73,7 @@ Local License Server URL.
 Example: http://10.0.1.1:7070
 
 The value can be set from the environment variable: LLS_URL
-''', **environ_or_required("LLS_URL"))
+''', **environ_or_required("LLS_URL"), type=validate_lls_url)
 
 required.add_argument("--lls-username",
                       help='''
@@ -86,17 +94,17 @@ variable: LLS_PASSWORD
 ''', **environ_or_required("LLS_PASSWORD"))
 
 parser.add_argument("--duration", help='''Periodically query license usage 
-        over the defined duration in seconds. Defaults to 8 hours''',
+        over the defined duration in seconds. Defaults to 8 hours. (min 120 seconds)''',
                     action='store', required=False, default=8 * 60 * 60,
-                    type=partial(ranged_integer, "duration", 60, 864000),
+                    type=partial(ranged_integer, "duration", 120, 864000),
                     )
 
 parser.add_argument("--delay", help=argparse.SUPPRESS,
-                    action='store', required=False, default=30,
-                    type=partial(ranged_integer, "duration", 60, 600),
+                    action='store', required=False, default=60,
+                    type=partial(ranged_integer, "duration", 60, 120),
                     )
 
-parser.add_argument("--alert-threshold", help='''Percentage of used licenses available that will trigger an alert.''',
+parser.add_argument("--alert-threshold", help='''Percentage from 0-100 of used licenses available that will trigger an alert.''',
                     action='store', required=False, default=15,
                     type=partial(ranged_integer, "duration", 0, 100)),
 
@@ -144,7 +152,9 @@ class LLSClient():
         resp = requests.post(
             url=self.url + "/api/1.0/instances/~/" + "authorize", json=self.creds)
         if not resp.status_code == 200:
-            raise Exception(resp.text)
+            msg = ("Authentication Error: Response code: {}. "
+                "Please verify username and password and try again.".format(resp.status_code))
+            raise Exception(msg)
 
         token = resp.json()["token"]
         self.token = token

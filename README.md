@@ -37,10 +37,11 @@ Duration period
 optional arguments:
   -h, --help            show this help message and exit
   --duration DURATION   Periodically query license usage over the defined
-                        duration in seconds. Defaults to 8 hours
+                        duration in seconds. Defaults to 8 hours. (min 120
+                        seconds)
   --alert-threshold ALERT_THRESHOLD
-                        Percentage of used licenses available that will
-                        trigger an alert.
+                        Percentage from 0-100 of used licenses available that
+                        will trigger an alert.
   -o OUTPUT_FILE, --output-file OUTPUT_FILE
                         Saves the results to a file. Currently the only
                         supported format is json
@@ -59,5 +60,7 @@ Required arguments:
                         authorization token while interacting with the REST
                         API's. The value for this can be set from the
                         environment variable: LLS_PASSWORD
-
 ```
+
+A warning will be printed if using http:// to communicate with LLS. Teradici
+highly recommends communicating over secure connections.
