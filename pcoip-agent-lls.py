@@ -108,7 +108,7 @@ parser.add_argument("--delay", help=argparse.SUPPRESS,
 
 parser.add_argument("--alert-threshold",
         help='''Percentage from 0-100 of used licenses available that will trigger an alert.''',
-                    action='store', required=False, default=15,
+                    action='store', required=False, default=80,
                     type=partial(ranged_integer, "duration", 0, 100)),
 
 parser.add_argument("-o", "--output-file", help='''Saves the results to a file.
