@@ -104,7 +104,8 @@ parser.add_argument("--delay", help=argparse.SUPPRESS,
                     type=partial(ranged_integer, "duration", 60, 120),
                     )
 
-parser.add_argument("--alert-threshold", help='''Percentage from 0-100 of used licenses available that will trigger an alert.''',
+parser.add_argument("--alert-threshold", help='''Percentage from 0-100 of used licenses available that will trigger an alert. 
+        Defaults to 80.''',
                     action='store', required=False, default=80,
                     type=partial(ranged_integer, "duration", 0, 100)),
 
