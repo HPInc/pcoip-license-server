@@ -10,6 +10,18 @@ import jsonstreams
 import warnings
 load_dotenv()
 
+MIN_THRESHOLD_PERCENT = 0
+DEFAULT_THRESHOLD_PERCENT = 80
+MAX_THRESHOLD_PERCENT = 100
+
+MIN_DELAY_MINUTES = 1
+DEFAULT_DELAY_MINUTES = 1
+MAX_DELAY_MINUTES = 5
+
+MIN_DURATION_MINUTES = 1
+DEFAULT_DURATION_MINUTES = 8 * 60
+MAX_DURATION_MINUTES = 10 * 24 * 60
+
 
 def ranged_integer(label, min_val, max_val, value):
     '''
@@ -94,22 +106,22 @@ variable: LLS_PASSWORD
 ''', **environ_or_required("LLS_PASSWORD"))
 
 parser.add_argument("--duration", help='''Periodically query license usage 
-        over the defined duration (seconds) and output the results.
+        over the defined duration (in minutes) and output the results.
         Defaults to 4 hours. (min 120 seconds).
         ''',
-                    action='store', required=False, default=4 * 60 * 60,
-                    type=partial(ranged_integer, "duration", 60, 864000),
+                    action='store', required=False, default=DEFAULT_DURATION_MINUTES,
+                    type=partial(ranged_integer, "duration", MIN_DURATION_MINUTES, MAX_DURATION_MINUTES),
                     )
 
 parser.add_argument("--delay", help=argparse.SUPPRESS,
-                    action='store', required=False, default=60,
-                    type=partial(ranged_integer, "duration", 60, 120),
+                    action='store', required=False, default=DEFAULT_DELAY_MINUTES,
+                    type=partial(ranged_integer, "duration", MIN_DELAY_MINUTES, MAX_DELAY_MINUTES),
                     )
 
 parser.add_argument("--alert-threshold",
         help='''Percentage from 0-100 of used licenses available that will trigger an alert.''',
-                    action='store', required=False, default=80,
-                    type=partial(ranged_integer, "duration", 0, 100)),
+                    action='store', required=False, default=DEFAULT_THRESHOLD_PERCENT,
+                    type=partial(ranged_integer, "duration", MIN_THRESHOLD_PERCENT, MAX_THRESHOLD_PERCENT)),
 
 parser.add_argument("-o", "--output-file", help='''Saves the results to a file.
         Currently the only supported format is json''',
@@ -259,8 +271,9 @@ if __name__ == '__main__':
 
     client = LLSClient(args.lls_url, args.lls_username, args.lls_password)
 
-    delay = args.delay
-    duration = args.duration
+    # convert the privided arguments from minutes to seconds
+    delay = args.delay * 60
+    duration = args.duration * 60
     outfile = None
     iterations = round(duration / delay) or 1
 
