@@ -201,7 +201,7 @@ def display_as_table(list_of_lists, row_format=None):
 def display_usage(client, iterations=5, delay=1, alert_threshold=15, outstream=None):
     header = ["Date", "Available - Standard Agent", "Max Used - Standard Agent",
               "Available - Graphics Agent", "Max Used - Graphics Agent", "Notes"]
-    fmt = "{:>20}{:>30}{:>30}{:>30}{:>30}{:>30}"
+    fmt = "{:>20}{:>30}{:>30}{:>30}{:>30}{:>50}"
     display_as_table([header], fmt)
     _first_iteration = True
 
@@ -218,26 +218,27 @@ def display_usage(client, iterations=5, delay=1, alert_threshold=15, outstream=N
             time.sleep(delay)
 
         # compute the max usage counts over the duration.
-        standard_total = [row['standard']['count'] for row in results]
-        standard_used = [row['standard']['used'] for row in results]
-        graphics_total = [row['graphics']['count'] for row in results]
-        graphics_used = [row['graphics']['used'] for row in results]
+        standard_total = max([row['standard']['count'] for row in results])
+        standard_used = max([row['standard']['used'] for row in results])
+        graphics_total = max([row['graphics']['count'] for row in results])
+        graphics_used = max([row['graphics']['used'] for row in results])
 
         data = dict(
-            available_standard_agent=max(standard_total),
-            max_used_standard_agent=max(standard_used),
-            available_graphics_agent=max(graphics_total),
-            max_used_graphics_agent=max(graphics_used),
-            note=note,
+            available_standard_agent=standard_total,
+            max_used_standard_agent=standard_used,
+            available_graphics_agent=graphics_total,
+            max_used_graphics_agent=graphics_used,
         )
-        for agent_type, key in [('Standard Agent', 'max_used_standard_agent'), 
-                ('Graphics Agent', 'max_used_graphics_agent')]:
 
-            count = data[key]
-            if (count > 0) and (100 * data[key] / count) >= alert_threshold:
+        for agent_type, count, used in [
+                ('standard', standard_total, standard_used),
+                ('graphics', graphics_total, graphics_used)]:
+            if (count > 0) and (100 * used / count) >= alert_threshold:
                 if note:
                     note += ","
-                note += "{} threshold exceeded alert".format(agent_type)
+                note += "{} threshold alert".format(agent_type)
+
+        data['note'] = note
 
         now = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
         if outstream:
@@ -248,7 +249,7 @@ def display_usage(client, iterations=5, delay=1, alert_threshold=15, outstream=N
                     now,
                     data['available_standard_agent'], data['max_used_standard_agent'],
                     data['available_graphics_agent'], data['max_used_graphics_agent'],
-                    data['note']
+                    data['note'],
                 ]], fmt
         )
 
