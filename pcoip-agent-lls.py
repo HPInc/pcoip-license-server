@@ -94,9 +94,11 @@ variable: LLS_PASSWORD
 ''', **environ_or_required("LLS_PASSWORD"))
 
 parser.add_argument("--duration", help='''Periodically query license usage 
-        over the defined duration in seconds. Defaults to 8 hours. (min 120 seconds)''',
-                    action='store', required=False, default=8 * 60 * 60,
-                    type=partial(ranged_integer, "duration", 120, 864000),
+        over the defined duration (seconds) and output the results.
+        Defaults to 4 hours. (min 120 seconds).
+        ''',
+                    action='store', required=False, default=4 * 60 * 60,
+                    type=partial(ranged_integer, "duration", 60, 864000),
                     )
 
 parser.add_argument("--delay", help=argparse.SUPPRESS,
@@ -104,7 +106,8 @@ parser.add_argument("--delay", help=argparse.SUPPRESS,
                     type=partial(ranged_integer, "duration", 60, 120),
                     )
 
-parser.add_argument("--alert-threshold", help='''Percentage from 0-100 of used licenses available that will trigger an alert.''',
+parser.add_argument("--alert-threshold",
+        help='''Percentage from 0-100 of used licenses available that will trigger an alert.''',
                     action='store', required=False, default=15,
                     type=partial(ranged_integer, "duration", 0, 100)),
 
@@ -113,9 +116,9 @@ parser.add_argument("-o", "--output-file", help='''Saves the results to a file.
                     action='store', default=None)
 
 
-def _handle_unathorized(func):
+def _handle_unauthorized(func):
     '''
-    Handles expired authentiction while interacting with the API"s
+    Re-authenticates and retries if 401 is received.
     '''
     def wrapper(*args, **kwargs):
         resp = func(*args, **kwargs)
@@ -142,7 +145,7 @@ class LLSClient():
         }
         self.authenticate()
 
-    @_handle_unathorized
+    @_handle_unauthorized
     def _get(self, url, token, data=dict(), **kwargs):
         return requests.get(url=url,
                             headers=dict(authorization="Bearer " + self.token),
@@ -150,10 +153,11 @@ class LLSClient():
 
     def authenticate(self):
         resp = requests.post(
-            url=self.url + "/api/1.0/instances/~/" + "authorize", json=self.creds)
+            url=self.url + "/api/1.0/instances/~/authorize", json=self.creds)
+
         if not resp.status_code == 200:
             msg = ("Authentication Error: Response code: {}. "
-                "Please verify username and password and try again.".format(resp.status_code))
+                "Please verify lls url, username and password and try again.".format(resp.status_code))
             raise Exception(msg)
 
         token = resp.json()["token"]
@@ -161,7 +165,6 @@ class LLSClient():
         return token
 
     def get_used_features(self):
-        results = []
         resp = self._get(
             url=self.url + "/api/1.0/instances/~/features", token=self.token)
 
@@ -198,41 +201,52 @@ def display_as_table(list_of_lists, row_format=None):
 def display_usage(client, iterations=5, delay=1, alert_threshold=15, outstream=None):
     header = ["Date", "Available - Standard Agent", "Max Used - Standard Agent",
               "Available - Graphics Agent", "Max Used - Graphics Agent", "Notes"]
-    fmt = "{:>20}{:>30}{:>30}{:>30}{:>30}{:>60}"
+    fmt = "{:>20}{:>30}{:>30}{:>30}{:>30}{:>30}"
     display_as_table([header], fmt)
-    results = []
 
-    for i in range(int(iterations), 0, -1):
-        data = client.get_used_features()
-        now = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+    while True:
+        results = []
         note = ""
 
-        for agent_type in ['graphics', 'standard']:
-            count = data[agent_type]['count']
-            if (count > 0) and (100 * data[agent_type]['used'] / count) >= alert_threshold:
+        for _ in range(int(iterations), 0, -1):
+            data = client.get_used_features()
+            results.append(data)
+            time.sleep(delay)
+
+        # compute the max usage counts over the duration.
+        standard_total = [row['standard']['count'] for row in results]
+        standard_used = [row['standard']['used'] for row in results]
+        graphics_total = [row['graphics']['count'] for row in results]
+        graphics_used = [row['graphics']['used'] for row in results]
+
+        data = dict(
+            available_standard_agent=max(standard_total),
+            max_used_standard_agent=max(standard_used),
+            available_graphics_agent=max(graphics_total),
+            max_used_graphics_agent=max(graphics_used),
+            note=note,
+        )
+        for agent_type, key in [('Standard Agent', 'max_used_standard_agent'), 
+                ('Graphics Agent', 'max_used_graphics_agent')]:
+
+            count = data[key]
+            if (count > 0) and (100 * data[key] / count) >= alert_threshold:
                 if note:
                     note += ","
                 note += "{} threshold exceeded alert".format(agent_type)
 
-        row = [now,
-               data['standard']['count'],
-               data['standard']['used'],
-               data['graphics']['count'],
-               data['graphics']['used'],
-               note]
-
+        now = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
         if outstream:
-            val = dict(
-                available_standard_agent=data['standard']['count'],
-                max_used_standard_agent=data['standard']['used'],
-                available_graphics_agent=data['graphics']['count'],
-                max_used_graphics_agent=data['graphics']['used'],
-                note=note,
-            )
-            outstream.write(now, val)
+            outstream.write(now, data)
 
-        display_as_table([row], fmt)
-        time.sleep(delay)
+        display_as_table(
+                [[
+                    now,
+                    data['available_standard_agent'], data['max_used_standard_agent'],
+                    data['available_graphics_agent'], data['max_used_graphics_agent'],
+                    data['note']
+                ]], fmt
+        )
 
 
 if __name__ == '__main__':
