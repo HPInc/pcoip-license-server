@@ -1,4 +1,10 @@
 # python-pcoip-agent-lls
+
+| DISCLAIMER |
+| --- |
+| This script is provided as-is and is not supported by Teradici. It is intended to provide a reference for accessing the Local License Server APIs. Please report any issues via github. |
+
+
 Tool that displays the maximum CAS license concurrent usage over time. Once the
 tool is started, it will continue to run and output results until terminated.
 
@@ -17,7 +23,7 @@ Create a filename named: ```.env``` in the checkout directory that contains the 
 
 
 ```
-LLS_URL=https://<address-of-lls>
+LLS_URL=https://<address-of-lls>:<port>
 LLS_USERNAME=<username>
 LLS_PASSWORD=<password>
 ```
@@ -42,7 +48,7 @@ optional arguments:
                         4 hours. (min 120 seconds).
   --alert-threshold ALERT_THRESHOLD
                         Percentage from 0-100 of used licenses available that
-                        will trigger an alert.
+                        will trigger an alert. Defaults to 80.
   -o OUTPUT_FILE, --output-file OUTPUT_FILE
                         Saves the results to a file. Currently the only
                         supported format is json
@@ -64,4 +70,5 @@ Required arguments:
 ```
 
 A warning will be printed if using http:// to communicate with LLS. Teradici
-highly recommends communicating over secure connections.
+highly recommends communicating over secure connections. See License Server
+Administration Guide "How to enable HTTPS/TLS for PCoIP License Server".
