@@ -71,4 +71,5 @@ Required arguments:
 
 A warning will be printed if using http:// to communicate with LLS. Teradici
 highly recommends communicating over secure connections. See License Server
-Administration Guide "How to enable HTTPS/TLS for PCoIP License Server".
+Administration Guide "How to enable HTTPS/TLS for PCoIP License Server" at
+https://help.teradici.com.
