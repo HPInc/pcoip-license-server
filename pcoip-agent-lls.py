@@ -203,6 +203,7 @@ def display_usage(client, iterations=5, delay=1, alert_threshold=15, outstream=N
               "Available - Graphics Agent", "Max Used - Graphics Agent", "Notes"]
     fmt = "{:>20}{:>30}{:>30}{:>30}{:>30}{:>30}"
     display_as_table([header], fmt)
+    _first_iteration = True
 
     while True:
         results = []
@@ -211,6 +212,9 @@ def display_usage(client, iterations=5, delay=1, alert_threshold=15, outstream=N
         for _ in range(int(iterations), 0, -1):
             data = client.get_used_features()
             results.append(data)
+            if _first_iteration:
+                _first_iteration = False
+                break
             time.sleep(delay)
 
         # compute the max usage counts over the duration.
