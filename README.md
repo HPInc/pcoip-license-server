@@ -1,5 +1,6 @@
 # python-pcoip-agent-lls
-Tool that displays the maximum CAS license concurrent usage over time
+Tool that displays the maximum CAS license concurrent usage over time. Once the
+tool is started, it will continue to run and output results until terminated.
 
 
 ## Setup Instructions
@@ -37,8 +38,8 @@ Duration period
 optional arguments:
   -h, --help            show this help message and exit
   --duration DURATION   Periodically query license usage over the defined
-                        duration in seconds. Defaults to 8 hours. (min 120
-                        seconds)
+                        duration (seconds) and output the results. Defaults to
+                        4 hours. (min 120 seconds).
   --alert-threshold ALERT_THRESHOLD
                         Percentage from 0-100 of used licenses available that
                         will trigger an alert.
