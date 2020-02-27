@@ -75,4 +75,4 @@ Administration Guide "How to enable HTTPS/TLS for PCoIP License Server" at
 https://help.teradici.com.
 
 This script takes advantage of the LLS REST APIs documented at
-http://<address-of-lls>:<port>/documentation/swagger-ui.html.
+```http://<address-of-lls>:<port>/documentation/swagger-ui.html```
