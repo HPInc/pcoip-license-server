@@ -5,8 +5,8 @@
 | This script is provided as-is and is not supported by Teradici. It is intended to provide a reference for accessing the Local License Server APIs. Please report any issues via github. |
 
 
-Tool that displays the maximum CAS license concurrent usage over time. Once the
-tool is started, it will continue to run and output results until terminated.
+Tool that displays the maximum Cloud Access Software license concurrent usage over time.
+Once the tool is started, it will continue to run and output results until terminated.
 
 
 ## Setup Instructions
