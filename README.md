@@ -4,4 +4,4 @@
 
 ## Applications 
 
-* [PCoIP Agent License](pcoip-agent-license/README.md)
+* [PCoIP Agent License](pcoip-agent-license/)
