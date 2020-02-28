@@ -1,0 +1,7 @@
+{"2020-02-28T00:12:44": {
+"available_standard_agent": 100,
+"max_used_standard_agent": 14,
+"available_graphics_agent": 100,
+"max_used_graphics_agent": 1,
+"note": "standard threshold alert"
+}}

@@ -1,13 +1,17 @@
 from functools import partial
 import os
-import requests
+from os.path import abspath, join, dirname
 import time
 from datetime import datetime
 import argparse
 from dotenv import load_dotenv
 import json
+import sys
 import jsonstreams
-import warnings
+sys.path.append(dirname(abspath(dirname(__file__))))
+
+from libs.lls import LLSClient
+
 load_dotenv()
 
 MIN_THRESHOLD_PERCENT = 0
@@ -54,11 +58,13 @@ def validate_lls_url(value):
         raise argparse.ArgumentTypeError(msg)
 
     if value.startswith('http://'):
-        msg = '''\n
-        Teradici highly recommends setting up the Local License Server as an HTTPS 
-        server otherwise the username and password are transmitted in clear text
-        \n'''
-        warnings.warn(msg)
+        msg = '''
+\n
+\t\tTeradici highly recommends setting up the Local License Server as an HTTPS 
+\t\tserver otherwise the username and password are transmitted in clear text
+\n
+'''
+        print(msg)
 
     return value
 
@@ -126,80 +132,6 @@ parser.add_argument("--alert-threshold",
 parser.add_argument("-o", "--output-file", help='''Saves the results to a file.
         Currently the only supported format is json''',
                     action='store', default=None)
-
-
-def _handle_unauthorized(func):
-    '''
-    Re-authenticates and retries if 401 is received.
-    '''
-    def wrapper(*args, **kwargs):
-        resp = func(*args, **kwargs)
-        if resp.status_code == 401:
-            client_instance = args[0]
-            client_instance.authenticate()
-            resp = func(*args, **kwargs)
-        return resp
-    return wrapper
-
-
-class LLSClient():
-    '''
-    Very simple interface around the rest API's. The http methods are decorated
-    so that an expired authorization token will re-authenticated and retry the
-    request. 
-    '''
-
-    def __init__(self, url, username, password):
-        self.url = url
-        self.creds = {
-            "password": password,
-            "user": username,
-        }
-        self.authenticate()
-
-    @_handle_unauthorized
-    def _get(self, url, token, data=dict(), **kwargs):
-        return requests.get(url=url,
-                            headers=dict(authorization="Bearer " + self.token),
-                            params=data)
-
-    def authenticate(self):
-        resp = requests.post(
-            url=self.url + "/api/1.0/instances/~/authorize", json=self.creds)
-
-        if not resp.status_code == 200:
-            msg = ("Authentication Error: Response code: {}. "
-                "Please verify lls url, username and password and try again.".format(resp.status_code))
-            raise Exception(msg)
-
-        token = resp.json()["token"]
-        self.token = token
-        return token
-
-    def get_used_features(self):
-        resp = self._get(
-            url=self.url + "/api/1.0/instances/~/features", token=self.token)
-
-        rd = {
-            "standard": {
-                "count": 0,
-                "used": 0
-            },
-            "graphics": {
-                "count": 0,
-                "used": 0
-            }
-        }
-
-        for item in resp.json():
-            if (item["featureName"] == "Agent-Session"):
-                rd["standard"]["count"] += item["featureCount"]
-                rd["standard"]["used"] += item["used"]
-            elif (item["featureName"] == "Agent-Graphics"):
-                rd["graphics"]["count"] += item["featureCount"]
-                rd["graphics"]["used"] += item["used"]
-
-        return rd
 
 
 def display_as_table(list_of_lists, row_format=None):
@@ -270,6 +202,15 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     client = LLSClient(args.lls_url, args.lls_username, args.lls_password)
+
+    msg = "\t\tOutput will appear on the console every {} minute".format(
+            args.duration)
+
+    if args.duration > 1:
+        msg += "s"
+
+    print(msg, '\n\n')
+
 
     # convert the privided arguments from minutes to seconds
     delay = args.delay * 60
