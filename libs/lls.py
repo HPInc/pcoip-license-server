@@ -1,4 +1,7 @@
-import requests
+from requests.packages.urllib3.util import Retry
+from requests.adapters import HTTPAdapter
+from requests import Session, exceptions
+
 
 def _handle_unauthorized(func):
     '''
@@ -29,16 +32,20 @@ class LLSClient():
             "password": password,
             "user": username,
         }
+        self._session = Session()
+        self._session.mount(self.url, HTTPAdapter(
+            max_retries=Retry(total=3, status_forcelist=[500, 503, 502]))
+        )
         self.authenticate()
 
     @_handle_unauthorized
     def _get(self, url, token, data=dict(), **kwargs):
-        return requests.get(url=url,
+        return self._session.get(url=url,
                             headers=dict(authorization="Bearer " + self.token),
                             params=data)
 
     def authenticate(self):
-        resp = requests.post(
+        resp = self._session.post(
             url=self.url + "/api/1.0/instances/~/authorize", json=self.creds)
 
         if not resp.status_code == 200:
