@@ -20,7 +20,7 @@ def _handle_unauthorized(func):
 class LLSClient():
     '''
     Very simple interface around the rest API's. The http methods are decorated
-    so that an expired authorization token will re-authenticated and retry the
+    so that an expired authorization token will re-authenticate and retry the
     request. 
 
     TODO: Add error handling around Conenction Errors

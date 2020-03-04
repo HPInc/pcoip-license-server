@@ -28,7 +28,7 @@ LLS_USERNAME=<username>
 LLS_PASSWORD=<password>
 ```
 
-This information will be automatically used at startup. Alterntiavely, this
+This information will be automatically used at startup. Alternatively, this
 information can be provided as command line parameters --lls-url,
 --lls-username, and --lls-password
 

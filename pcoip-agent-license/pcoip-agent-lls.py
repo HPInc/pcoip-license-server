@@ -212,7 +212,7 @@ if __name__ == '__main__':
     print(msg, '\n\n')
 
 
-    # convert the privided arguments from minutes to seconds
+    # convert the provided arguments from minutes to seconds
     delay = args.delay * 60
     duration = args.duration * 60
     outfile = None
