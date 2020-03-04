@@ -1,0 +1,3 @@
+jsonstreams==0.4.2
+python-dotenv==0.11.0
+requests==2.23.0

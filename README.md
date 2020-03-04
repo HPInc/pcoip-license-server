@@ -1,2 +1,7 @@
-# python-pcoip-agent-lls
-Tool that displays the maximum CAS license concurrent usage over time
+| DISCLAIMER |
+| --- |
+| This scripts provided here are as-is and are not supported by Teradici. |
+
+## Applications 
+
+* [PCoIP Agent License](pcoip-agent-license/)
