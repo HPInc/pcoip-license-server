@@ -143,8 +143,8 @@ def display_as_table(list_of_lists, row_format=None):
 
 
 def display_usage(client, iterations=5, delay=1, alert_threshold=15, outstream=None):
-    header = ["Date", "Available - Standard Agent", "Max Used - Standard Agent",
-              "Available - Graphics Agent", "Max Used - Graphics Agent", "Notes"]
+    header = ["Date", "Total - Standard Agent", "Max Used - Standard Agent",
+              "Total - Graphics Agent", "Max Used - Graphics Agent", "Notes"]
     fmt = "{:>20}{:>30}{:>30}{:>30}{:>30}{:>50}"
     display_as_table([header], fmt)
     _first_iteration = True
