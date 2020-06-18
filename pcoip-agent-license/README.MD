@@ -83,7 +83,7 @@ you received from Teradici.
 (3) To set your CLS-ID password, do the following:
 1. Log into https://teradici.flexnetoperations.com. To request access, create a case with
 [Teradici support](https://help.teradici.com/s/contactsupport). Be prepared to provide a valid
-activation key, and the name and email address of a contact person who should have access.
+Registration Code, and the name and email address of a contact person who should have access.
 2. Go to "Served Licenses" -> "License Server" -> \<your CLS ID\> -> "Set Password".
 
 (4) The LLS password is the same password used when the LLS was initially setup.
