@@ -78,7 +78,8 @@ Administration Guide "How to enable HTTPS/TLS for PCoIP License Server" at
 https://help.teradici.com.
 
 (2) To get your CLS-ID, this is the first part (left of the @) in the Registration Code
-you received from Teradici.
+you received from Teradici. For example, if the Registration Code is
+XXXXXXX@YYYY-YYYY-YYYY-YYYY, the CLS-ID will be XXXXXXX.
 
 (3) To set your CLS-ID password, do the following:
 1. Log into https://teradici.flexnetoperations.com. To request access, create a case with
