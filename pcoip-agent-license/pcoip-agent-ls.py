@@ -49,14 +49,14 @@ def ranged_integer(label, min_val, max_val, value):
 
     return int(value)
 
-def validate_ls_url(value):
+def validate_ls_endpoint(value):
     '''
     Simple validator for ls url against http or https. Warning is issued if
     using http.
     '''
     if not value.startswith('http://') and not value.startswith('https://'):
         msg = "Please provide ls-url in the format https://<lls-address>:<port>"
-        raise argparse.ArgumentTypeError(msg)
+        return validate_cls_id(value)
 
     if value.startswith('http://'):
         msg = '''
@@ -74,7 +74,7 @@ def validate_cls_id(value):
     Simple validator for cls-id.
     '''
     if re.match("^[0-9A-Z]{12}$", value) is None:
-        msg = "CLS ID must be 12 characters long and must only include 0-9,A-Z"
+        msg = "Cloud License Service ID must be 12 characters long and must only include 0-9,A-Z"
         raise argparse.ArgumentTypeError(msg)
     return value
 
@@ -87,42 +87,25 @@ def environ_or_required(key):
         else {'required': True}
     )
     return rv
-	
-def environ_or_optional(key):
-    '''
-    https://stackoverflow.com/questions/10551117/setting-options-from-environment-variables-when-using-argparse
-    '''
-    rv = (
-        {'default': os.environ.get(key)} if os.environ.get(key)
-        else {'required': False}
-    )
-    return rv
 
 parser = argparse.ArgumentParser(description='''
 This script displays the maximum CAS license concurrent usage over the Duration
 period
 ''')
 
-required_ls_type = parser.add_mutually_exclusive_group()
 
-required_ls_type.add_argument("--ls-url",
+required = parser.add_argument_group("Required arguments")
+
+required.add_argument("--ls-url",
                       help='''
 Local License Server URL.
 Example: https://10.0.1.1:7071
 
-The value can be set from the environment variable: LLS_URL
-''', **environ_or_optional("LS_URL"), type=validate_ls_url)
-
-required_ls_type.add_argument("--cls-id",
-                      help='''
-Cloud License Service ID.
+or Cloud License Service ID.
 Example: 1EJD8DXUKQWQ
 
-The value can be set from the environment variable: CLS_ID
-''', **environ_or_optional("CLS_ID"), type=validate_cls_id)
-
-
-required = parser.add_argument_group("Required arguments")
+The value can be set from the environment variable: LLS_URL
+''', **environ_or_required("LS_URL"), type=validate_ls_endpoint)
 
 required.add_argument("--ls-username",
                       help='''
@@ -231,11 +214,7 @@ def display_usage(client, iterations=5, delay=1, alert_threshold=15, outstream=N
 
 if __name__ == '__main__':
     args = parser.parse_args()
-	
-    if args.ls_url is not None:
-        url = args.ls_url
-    else:
-        url = args.cls_id
+    url = args.ls_url
 
     client = LSClient(url, args.ls_username, args.ls_password)
 
