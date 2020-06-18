@@ -8,9 +8,10 @@ from dotenv import load_dotenv
 import json
 import sys
 import jsonstreams
+import re
 sys.path.append(dirname(abspath(dirname(__file__))))
 
-from libs.lls import LLSClient
+from libs.ls import LSClient
 
 load_dotenv()
 
@@ -48,13 +49,13 @@ def ranged_integer(label, min_val, max_val, value):
 
     return int(value)
 
-def validate_lls_url(value):
+def validate_ls_url(value):
     '''
-    Simple validator for lls url against http or https. Warning is issued if
+    Simple validator for ls url against http or https. Warning is issued if
     using http.
     '''
     if not value.startswith('http://') and not value.startswith('https://'):
-        msg = "Please provide lls-url in the format https://<lss-address>:<port>"
+        msg = "Please provide ls-url in the format https://<lls-address>:<port>"
         raise argparse.ArgumentTypeError(msg)
 
     if value.startswith('http://'):
@@ -67,6 +68,15 @@ def validate_lls_url(value):
         print(msg)
 
     return value
+	
+def validate_cls_id(value):
+    '''
+    Simple validator for cls-id.
+    '''
+    if re.match("^[0-9A-Z]{12}$", value) is None:
+        msg = "CLS ID must be 12 characters long and must only include 0-9,A-Z"
+        raise argparse.ArgumentTypeError(msg)
+    return value
 
 def environ_or_required(key):
     '''
@@ -77,39 +87,60 @@ def environ_or_required(key):
         else {'required': True}
     )
     return rv
-
+	
+def environ_or_optional(key):
+    '''
+    https://stackoverflow.com/questions/10551117/setting-options-from-environment-variables-when-using-argparse
+    '''
+    rv = (
+        {'default': os.environ.get(key)} if os.environ.get(key)
+        else {'required': False}
+    )
+    return rv
 
 parser = argparse.ArgumentParser(description='''
 This script displays the maximum CAS license concurrent usage over the Duration
 period
 ''')
 
-required = parser.add_argument_group("Required arguments")
-required.add_argument("--lls-url",
+required_ls_type = parser.add_mutually_exclusive_group()
+
+required_ls_type.add_argument("--ls-url",
                       help='''
 Local License Server URL.
-Example: http://10.0.1.1:7070
+Example: https://10.0.1.1:7071
 
 The value can be set from the environment variable: LLS_URL
-''', **environ_or_required("LLS_URL"), type=validate_lls_url)
+''', **environ_or_optional("LS_URL"), type=validate_ls_url)
 
-required.add_argument("--lls-username",
+required_ls_type.add_argument("--cls-id",
                       help='''
-Local License Server Username. Used for acquiring an authorization token
+Cloud License Service ID.
+Example: 1EJD8DXUKQWQ
+
+The value can be set from the environment variable: CLS_ID
+''', **environ_or_optional("CLS_ID"), type=validate_cls_id)
+
+
+required = parser.add_argument_group("Required arguments")
+
+required.add_argument("--ls-username",
+                      help='''
+License Server Username. Used for acquiring an authorization token
+while interacting with the REST API's. This is likely 'admin'.
+
+The value for this can be set from the environment
+variable: LS_USERNAME
+''', **environ_or_required("LS_USERNAME"))
+
+required.add_argument("--ls-password",
+                      help='''
+License Server Password. Used for acquiring an authorization token
 while interacting with the REST API's.
 
 The value for this can be set from the environment
-variable: LLS_USERNAME
-''', **environ_or_required("LLS_USERNAME"))
-
-required.add_argument("--lls-password",
-                      help='''
-Local License Server Password. Used for acquiring an authorization token
-while interacting with the REST API's.
-
-The value for this can be set from the environment
-variable: LLS_PASSWORD
-''', **environ_or_required("LLS_PASSWORD"))
+variable: LS_PASSWORD
+''', **environ_or_required("LS_PASSWORD"))
 
 parser.add_argument("--duration", help='''Periodically query license usage 
         over the defined duration (in minutes) and output the results.
@@ -200,8 +231,13 @@ def display_usage(client, iterations=5, delay=1, alert_threshold=15, outstream=N
 
 if __name__ == '__main__':
     args = parser.parse_args()
+	
+    if args.ls_url is not None:
+        url = args.ls_url
+    else:
+        url = args.cls_id
 
-    client = LLSClient(args.lls_url, args.lls_username, args.lls_password)
+    client = LSClient(url, args.ls_username, args.ls_password)
 
     msg = "\t\tOutput will appear on the console every {} minute".format(
             args.duration)
