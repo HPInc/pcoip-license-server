@@ -23,8 +23,7 @@ Create a filename named: ```.env``` in the checkout directory that contains the 
 
 
 ```
-LS_URL=https://<address-of-ls>:<port>    OR
-CLS_ID=<your-cls-id>
+LS_URL=https://<address-of-ls>:<port> OR CLS_ID=<your-cls-id>
 LS_USERNAME=<username>
 LS_PASSWORD=<password>
 ```
