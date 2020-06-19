@@ -17,17 +17,23 @@ def _handle_unauthorized(func):
     return wrapper
 
 
-class LLSClient():
+class LSClient():
     '''
-    Very simple interface around the rest API's. The http methods are decorated
+    Very simple interface around the rest API's. The https methods are decorated
     so that an expired authorization token will re-authenticate and retry the
     request. 
 
-    TODO: Add error handling around Conenction Errors
+    TODO: Add error handling around Connection Errors
     '''
 
-    def __init__(self, url, username, password):
-        self.url = url
+    def __init__(self, uri, username, password):
+        if uri.startswith('http'):
+            self.url = uri
+            self.cls = '~'
+        else:
+            self.url = 'https://teradici.compliance.flexnetoperations.com'
+            self.cls = uri
+		
         self.creds = {
             "password": password,
             "user": username,
@@ -46,11 +52,11 @@ class LLSClient():
 
     def authenticate(self):
         resp = self._session.post(
-            url=self.url + "/api/1.0/instances/~/authorize", json=self.creds)
+            url=self.url + "/api/1.0/instances/" + self.cls + "/authorize", json=self.creds)
 
         if not resp.status_code == 200:
             msg = ("Authentication Error: Response code: {}. "
-                "Please verify lls url, username and password and try again.".format(resp.status_code))
+                "Please verify ls url or cls id, username and password and try again.".format(resp.status_code))
             raise Exception(msg)
 
         token = resp.json()["token"]
@@ -59,7 +65,7 @@ class LLSClient():
 
     def get_used_features(self):
         resp = self._get(
-            url=self.url + "/api/1.0/instances/~/features", token=self.token)
+            url=self.url + "/api/1.0/instances/" + self.cls + "/features", token=self.token)
 
         rd = {
             "standard": {
@@ -81,4 +87,3 @@ class LLSClient():
                 rd["graphics"]["used"] += item["used"]
 
         return rd
-

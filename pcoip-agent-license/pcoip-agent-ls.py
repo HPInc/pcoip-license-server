@@ -8,9 +8,10 @@ from dotenv import load_dotenv
 import json
 import sys
 import jsonstreams
+import re
 sys.path.append(dirname(abspath(dirname(__file__))))
 
-from libs.lls import LLSClient
+from libs.ls import LSClient
 
 load_dotenv()
 
@@ -48,14 +49,13 @@ def ranged_integer(label, min_val, max_val, value):
 
     return int(value)
 
-def validate_lls_url(value):
+def validate_ls_endpoint(value):
     '''
-    Simple validator for lls url against http or https. Warning is issued if
+    Simple validator for ls url against http or https. Warning is issued if
     using http.
     '''
     if not value.startswith('http://') and not value.startswith('https://'):
-        msg = "Please provide lls-url in the format https://<lss-address>:<port>"
-        raise argparse.ArgumentTypeError(msg)
+        return validate_cls_id(value)
 
     if value.startswith('http://'):
         msg = '''
@@ -66,6 +66,15 @@ def validate_lls_url(value):
 '''
         print(msg)
 
+    return value
+	
+def validate_cls_id(value):
+    '''
+    Simple validator for cls-id.
+    '''
+    if re.match("^[0-9A-Z]{12}$", value) is None:
+        msg = "Cloud License Service ID must be 12 characters long and only include 0-9,A-Z"
+        raise argparse.ArgumentTypeError(msg)
     return value
 
 def environ_or_required(key):
@@ -78,38 +87,40 @@ def environ_or_required(key):
     )
     return rv
 
-
 parser = argparse.ArgumentParser(description='''
-This script displays the maximum CAS license concurrent usage over the Duration
+This script displays the maximum Cloud Access Software license concurrent usage over the Duration
 period
 ''')
 
+
 required = parser.add_argument_group("Required arguments")
-required.add_argument("--lls-url",
-                      help='''
-Local License Server URL.
-Example: http://10.0.1.1:7070
 
-The value can be set from the environment variable: LLS_URL
-''', **environ_or_required("LLS_URL"), type=validate_lls_url)
-
-required.add_argument("--lls-username",
+required.add_argument("--ls-uri",
                       help='''
-Local License Server Username. Used for acquiring an authorization token
-while interacting with the REST API's.
+Local License Server URL
+(Example: https://10.0.1.1:7071)
+
+or Cloud License Service ID
+(Example: 1EJD8DXUKQWQ).
+
+The value can be set from the environment variable: LS_URI
+''', **environ_or_required("LS_URI"), type=validate_ls_endpoint)
+
+required.add_argument("--ls-username",
+                      help='''
+License Server Username. This is likely 'admin'.
 
 The value for this can be set from the environment
-variable: LLS_USERNAME
-''', **environ_or_required("LLS_USERNAME"))
+variable: LS_USERNAME
+''', **environ_or_required("LS_USERNAME"))
 
-required.add_argument("--lls-password",
+required.add_argument("--ls-password",
                       help='''
-Local License Server Password. Used for acquiring an authorization token
-while interacting with the REST API's.
+License Server Password. 
 
 The value for this can be set from the environment
-variable: LLS_PASSWORD
-''', **environ_or_required("LLS_PASSWORD"))
+variable: LS_PASSWORD
+''', **environ_or_required("LS_PASSWORD"))
 
 parser.add_argument("--duration", help='''Periodically query license usage 
         over the defined duration (in minutes) and output the results.
@@ -200,8 +211,9 @@ def display_usage(client, iterations=5, delay=1, alert_threshold=15, outstream=N
 
 if __name__ == '__main__':
     args = parser.parse_args()
+    uri = args.ls_uri
 
-    client = LLSClient(args.lls_url, args.lls_username, args.lls_password)
+    client = LSClient(uri, args.ls_username, args.ls_password)
 
     msg = "\t\tOutput will appear on the console every {} minute".format(
             args.duration)
