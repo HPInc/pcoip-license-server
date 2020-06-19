@@ -38,8 +38,8 @@ usage: pcoip-agent-ls.py [-h] [--ls-url LS_URL | --cls-id CLS_ID]
                          [--duration DURATION]
                          [--alert-threshold ALERT_THRESHOLD] [-o OUTPUT_FILE]
 
-This script displays the maximum CAS license concurrent usage over the
-Duration period
+This script displays the maximum Cloud Access Software license concurrent usage
+over the Duration period.
 
 optional arguments:
   -h, --help            show this help message and exit
