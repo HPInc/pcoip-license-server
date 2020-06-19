@@ -55,7 +55,6 @@ def validate_ls_endpoint(value):
     using http.
     '''
     if not value.startswith('http://') and not value.startswith('https://'):
-        msg = "Please provide ls-url in the format https://<lls-address>:<port>"
         return validate_cls_id(value)
 
     if value.startswith('http://'):
@@ -74,7 +73,7 @@ def validate_cls_id(value):
     Simple validator for cls-id.
     '''
     if re.match("^[0-9A-Z]{12}$", value) is None:
-        msg = "Cloud License Service ID must be 12 characters long and must only include 0-9,A-Z"
+        msg = "Cloud License Service ID must be 12 characters long and only include 0-9,A-Z"
         raise argparse.ArgumentTypeError(msg)
     return value
 
@@ -89,28 +88,27 @@ def environ_or_required(key):
     return rv
 
 parser = argparse.ArgumentParser(description='''
-This script displays the maximum CAS license concurrent usage over the Duration
+This script displays the maximum Cloud Access Software license concurrent usage over the Duration
 period
 ''')
 
 
 required = parser.add_argument_group("Required arguments")
 
-required.add_argument("--ls-url",
+required.add_argument("--ls-uri",
                       help='''
-Local License Server URL.
-Example: https://10.0.1.1:7071
+Local License Server URL
+(Example: https://10.0.1.1:7071)
 
-or Cloud License Service ID.
-Example: 1EJD8DXUKQWQ
+or Cloud License Service ID
+(Example: 1EJD8DXUKQWQ).
 
-The value can be set from the environment variable: LLS_URL
-''', **environ_or_required("LS_URL"), type=validate_ls_endpoint)
+The value can be set from the environment variable: LLS_URI
+''', **environ_or_required("LS_URI"), type=validate_ls_endpoint)
 
 required.add_argument("--ls-username",
                       help='''
-License Server Username. Used for acquiring an authorization token
-while interacting with the REST API's. This is likely 'admin'.
+License Server Username. This is likely 'admin'.
 
 The value for this can be set from the environment
 variable: LS_USERNAME
@@ -118,8 +116,7 @@ variable: LS_USERNAME
 
 required.add_argument("--ls-password",
                       help='''
-License Server Password. Used for acquiring an authorization token
-while interacting with the REST API's.
+License Server Password. 
 
 The value for this can be set from the environment
 variable: LS_PASSWORD
@@ -214,9 +211,9 @@ def display_usage(client, iterations=5, delay=1, alert_threshold=15, outstream=N
 
 if __name__ == '__main__':
     args = parser.parse_args()
-    url = args.ls_url
+    uri = args.ls_uri
 
-    client = LSClient(url, args.ls_username, args.ls_password)
+    client = LSClient(uri, args.ls_username, args.ls_password)
 
     msg = "\t\tOutput will appear on the console every {} minute".format(
             args.duration)
