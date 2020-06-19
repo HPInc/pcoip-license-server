@@ -26,13 +26,13 @@ class LSClient():
     TODO: Add error handling around Connection Errors
     '''
 
-    def __init__(self, url, username, password):
-        if url.startswith('http'):
-            self.url = url
+    def __init__(self, uri, username, password):
+        if uri.startswith('http'):
+            self.url = uri
             self.cls = '~'
         else:
             self.url = 'https://teradici.compliance.flexnetoperations.com'
-            self.cls = url
+            self.cls = uri
 		
         self.creds = {
             "password": password,
