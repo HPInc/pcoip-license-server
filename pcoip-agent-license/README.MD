@@ -81,7 +81,7 @@ XXXXXXX@YYYY-YYYY-YYYY-YYYY, the Cloud License Service ID will be XXXXXXX.
 Registration Code, and the name and email address of a contact person who should have access.
 2. Go to "Served Licenses" -> "License Server" -> \<your CLS ID\> -> "Set Password".
 
-(4) The Local Licese Server password is the same password used when the Local License Server
+(4) The Local License Server password is the same password used when the Local License Server
 was initially setup.
 
 
