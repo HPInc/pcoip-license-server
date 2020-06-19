@@ -103,7 +103,7 @@ Local License Server URL
 or Cloud License Service ID
 (Example: 1EJD8DXUKQWQ).
 
-The value can be set from the environment variable: LLS_URI
+The value can be set from the environment variable: LS_URI
 ''', **environ_or_required("LS_URI"), type=validate_ls_endpoint)
 
 required.add_argument("--ls-username",
