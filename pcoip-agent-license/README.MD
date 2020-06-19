@@ -38,8 +38,8 @@ usage: pcoip-agent-ls.py [-h] [--ls-url LS_URL | --cls-id CLS_ID]
                          [--duration DURATION]
                          [--alert-threshold ALERT_THRESHOLD] [-o OUTPUT_FILE]
 
-This script displays the maximum CAS license concurrent usage over the
-Duration period
+This script displays the maximum Cloud Access Software license concurrent usage
+over the Duration period.
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -78,11 +78,14 @@ Administration Guide "How to enable HTTPS/TLS for PCoIP License Server" at
 https://help.teradici.com.
 
 (2) To get your CLS-ID, this is the first part (left of the @) in the Registration Code
-you received from Teradici.
+you received from Teradici. For example, if the Registration Code is
+XXXXXXX@YYYY-YYYY-YYYY-YYYY, the CLS-ID will be XXXXXXX.
 
-(3) To set your CLS-ID password, log into https://teradici.flexnetoperations.com, go to
-Served Licenses -> License Server -> \<your CLS ID\> -> Set Password. You need to have 
-an account setup by Teradici first.
+(3) To set your CLS-ID password, do the following:
+1. Log into https://teradici.flexnetoperations.com. To request access, create a case with
+[Teradici support](https://help.teradici.com/s/contactsupport). Be prepared to provide a valid
+Registration Code, and the name and email address of a contact person who should have access.
+2. Go to "Served Licenses" -> "License Server" -> \<your CLS ID\> -> "Set Password".
 
 (4) The LLS password is the same password used when the LLS was initially setup.
 

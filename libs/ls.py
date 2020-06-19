@@ -31,7 +31,7 @@ class LSClient():
             self.url = uri
             self.cls = '~'
         else:
-            self.url = 'https://teradiciuat.compliance.flexnetoperations.com'
+            self.url = 'https://teradici.compliance.flexnetoperations.com'
             self.cls = uri
 		
         self.creds = {
