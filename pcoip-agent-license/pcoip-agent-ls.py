@@ -2,6 +2,7 @@ from functools import partial
 import os
 from os.path import abspath, join, dirname
 import time
+import calendar
 from datetime import datetime
 import argparse
 from dotenv import load_dotenv
@@ -9,6 +10,7 @@ import json
 import sys
 import jsonstreams
 import re
+import socket
 sys.path.append(dirname(abspath(dirname(__file__))))
 
 from libs.ls import LSClient
@@ -29,63 +31,62 @@ MAX_DURATION_MINUTES = 10 * 24 * 60
 
 
 def ranged_integer(label, min_val, max_val, value):
-    '''
-    Simple validator for numeric (int) arguments. Provides the ability to
-    specify min, max range and will raise more helpful exceptions if validation
-    fails.
-    '''
-    try:
-        value = int(value)
-    except ValueError:
-        raise argparse.ArgumentTypeError(
-            "Provided {label} must be of numeric type".format(
-                label=label))
+  '''
+  Simple validator for numeric (int) arguments. Provides the ability to
+  specify min, max range and will raise more helpful exceptions if validation
+  fails.
+  '''
+  try:
+    value = int(value)
+  except ValueError:
+    raise argparse.ArgumentTypeError(
+      "Provided {label} must be of numeric type".format(label=label))
 
-    msg = "Provided {label} of {value} must be smaller than {max} and greater than {min}".format(
-        label=label, min=min_val, max=max_val, value=value)
+  msg = "Provided {label} of {value} must be smaller than {max} and greater than {min}".format(
+    label=label, min=min_val, max=max_val, value=value)
 
-    if value < min_val or value > max_val:
-        raise argparse.ArgumentTypeError(msg)
+  if value < min_val or value > max_val:
+    raise argparse.ArgumentTypeError(msg)
 
-    return int(value)
+  return int(value)
 
 def validate_ls_endpoint(value):
-    '''
-    Simple validator for ls url against http or https. Warning is issued if
-    using http.
-    '''
-    if not value.startswith('http://') and not value.startswith('https://'):
-        return validate_cls_id(value)
+  '''
+  Simple validator for ls url against http or https. Warning is issued if
+  using http.
+  '''
+  if not value.startswith('http://') and not value.startswith('https://'):
+    return validate_cls_id(value)
 
-    if value.startswith('http://'):
-        msg = '''
+  if value.startswith('http://'):
+    msg = '''
 \n
 \t\tTeradici highly recommends setting up the Local License Server as an HTTPS 
 \t\tserver otherwise the username and password are transmitted in clear text
 \n
 '''
-        print(msg)
+    print(msg)
 
-    return value
+  return value
 	
 def validate_cls_id(value):
-    '''
-    Simple validator for cls-id.
-    '''
-    if re.match("^[0-9A-Z]{12}$", value) is None:
-        msg = "Cloud License Service ID must be 12 characters long and only include 0-9,A-Z"
-        raise argparse.ArgumentTypeError(msg)
-    return value
+  '''
+  Simple validator for cls-id.
+  '''
+  if re.match("^[0-9A-Z]{12}$", value) is None:
+    msg = "Cloud License Service ID must be 12 characters long and only include 0-9,A-Z"
+    raise argparse.ArgumentTypeError(msg)
+  return value
 
 def environ_or_required(key):
-    '''
-    https://stackoverflow.com/questions/10551117/setting-options-from-environment-variables-when-using-argparse
-    '''
-    rv = (
-        {'default': os.environ.get(key)} if os.environ.get(key)
-        else {'required': True}
-    )
-    return rv
+  '''
+  https://stackoverflow.com/questions/10551117/setting-options-from-environment-variables-when-using-argparse
+  '''
+  rv = (
+    {'default': os.environ.get(key)} if os.environ.get(key)
+    else {'required': True}
+  )
+  return rv
 
 parser = argparse.ArgumentParser(description='''
 This script displays the maximum Cloud Access Software license concurrent usage over the Duration
@@ -122,6 +123,22 @@ The value for this can be set from the environment
 variable: LS_PASSWORD
 ''', **environ_or_required("LS_PASSWORD"))
 
+required.add_argument("--graphite-url",
+		      help='''
+Graphite server URL.
+
+The value for this can be set from the enivronment
+variable: GRAPHITE_URL
+''', **environ_or_required("GRAPHITE_URL"))
+
+required.add_argument("--graphite-port",
+		     help='''
+Graphite server port.
+
+The value for this can be set from the environment
+variable: GRAPHITE_PORT
+''', **environ_or_required("GRAPHITE_PORT"))
+
 parser.add_argument("--duration", help='''Periodically query license usage 
         over the defined duration (in minutes) and output the results.
         Defaults to 4 hours. (min 120 seconds).
@@ -144,103 +161,136 @@ parser.add_argument("-o", "--output-file", help='''Saves the results to a file.
         Currently the only supported format is json''',
                     action='store', default=None)
 
+parser.add_argument("-d", "--display-usage", help='''Display usage on screen.''',
+		    action='store_true', required=False, default=None)
 
 def display_as_table(list_of_lists, row_format=None):
-    if not row_format:
-        row_format = "{:>10}" * len(list_of_lists[0])
+  if not row_format:
+    row_format = "{:>10}" * len(list_of_lists[0])
 
-    for row in list_of_lists:
-        print(row_format.format(*row))
-
+  for row in list_of_lists:
+    print(row_format.format(*row))
 
 def display_usage(client, iterations=5, delay=1, alert_threshold=15, outstream=None):
-    header = ["Date", "Total - Standard Agent", "Max Used - Standard Agent",
-              "Total - Graphics Agent", "Max Used - Graphics Agent", "Notes"]
-    fmt = "{:>20}{:>30}{:>30}{:>30}{:>30}{:>50}"
-    display_as_table([header], fmt)
-    _first_iteration = True
+  header = ["Date", "Total - Standard Agent", "Max Used - Standard Agent",
+            "Total - Graphics Agent", "Max Used - Graphics Agent", "Notes"]
+  fmt = "{:>20}{:>30}{:>30}{:>30}{:>30}{:>50}"
+  display_as_table([header], fmt)
+  _first_iteration = True
 
-    while True:
-        results = []
-        note = ""
+  while True:
+    results = []
+    note = ""
 
-        for _ in range(int(iterations), 0, -1):
-            data = client.get_used_features()
-            results.append(data)
-            if _first_iteration:
-                _first_iteration = False
-                break
-            time.sleep(delay)
+    for _ in range(int(iterations), 0, -1):
+      data = client.get_used_features()
+      results.append(data)
+      if _first_iteration:
+         _first_iteration = False
+         break
+      time.sleep(delay)
 
-        # compute the max usage counts over the duration.
-        standard_total = max([row['standard']['count'] for row in results])
-        standard_used = max([row['standard']['used'] for row in results])
-        graphics_total = max([row['graphics']['count'] for row in results])
-        graphics_used = max([row['graphics']['used'] for row in results])
+    # compute the max usage counts over the duration.
+    standard_total = max([row['standard']['count'] for row in results])
+    standard_used  = max([row['standard']['used'] for row in results])
+    graphics_total = max([row['graphics']['count'] for row in results])
+    graphics_used  = max([row['graphics']['used'] for row in results])
 
-        data = dict(
-            available_standard_agent=standard_total,
-            max_used_standard_agent=standard_used,
-            available_graphics_agent=graphics_total,
-            max_used_graphics_agent=graphics_used,
-        )
+    data = dict(
+      available_standard_agent=standard_total,
+      max_used_standard_agent=standard_used,
+      available_graphics_agent=graphics_total,
+      max_used_graphics_agent=graphics_used)
 
-        for agent_type, count, used in [
-                ('standard', standard_total, standard_used),
-                ('graphics', graphics_total, graphics_used)]:
-            if (count > 0) and (100 * used / count) >= alert_threshold:
-                if note:
-                    note += ","
-                note += "{} threshold alert".format(agent_type)
+    for agent_type, count, used in [
+      ('standard', standard_total, standard_used),
+      ('graphics', graphics_total, graphics_used)]:
+      if (count > 0) and (100 * used / count) >= alert_threshold:
+        if note:
+          note += ","
+        note += "{} threshold alert".format(agent_type)
 
-        data['note'] = note
+    data['note'] = note
 
-        now = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
-        if outstream:
-            outstream.write(now, data)
+    now = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+    if outstream:
+      outstream.write(now, data)
 
-        display_as_table(
-                [[
-                    now,
-                    data['available_standard_agent'], data['max_used_standard_agent'],
-                    data['available_graphics_agent'], data['max_used_graphics_agent'],
-                    data['note'],
-                ]], fmt
-        )
+    display_as_table(
+      [[
+          now,
+          data['available_standard_agent'], data['max_used_standard_agent'],
+          data['available_graphics_agent'], data['max_used_graphics_agent'],
+          data['note'],
+      ]], fmt
+    )
+
+def netcat(hostname, port, content):
+  '''
+  https://stackoverflow.com/questions/1908878/netcat-implementation-in-python
+  '''
+  s = socket.socket()
+  s.connect((hostname, int(port)))
+  s.sendall(content.encode('utf-8'))
+  s.close()
+
+def send_to_graphite(client):
+  epoch_seconds   = calendar.timegm(time.gmtime())
+  server_type     = 'pcoip'
+  results         = []
+  data            = client.get_used_features()
+  results.append(data)
+
+  # compute the max usage counts over the duration.
+  standard_total = max([row['standard']['count'] for row in results])
+  standard_used  = max([row['standard']['used'] for row in results])
+  graphics_total = max([row['graphics']['count'] for row in results])
+  graphics_used  = max([row['graphics']['used'] for row in results])
+
+  for agent_type, count, used in [
+    ('standard', standard_total, standard_used),
+    ('graphics', graphics_total, graphics_used)]:
+    total = "Licenses.teradiciCloud.{0}.{1}.total {2} {3}".format(server_type,agent_type,count,epoch_seconds)
+    used  = "Licenses.teradiciCloud.{0}.{1}.used {2} {3}".format(server_type,agent_type,used,epoch_seconds)
+    netcat(graphite_url,graphite_port,total)
+    netcat(graphite_url,graphite_port,used)
 
 
 if __name__ == '__main__':
-    args = parser.parse_args()
-    uri = args.ls_uri
+  args          = parser.parse_args()
+  uri           = args.ls_uri
+  graphite_url  = args.graphite_url
+  graphite_port = args.graphite_port
 
-    client = LSClient(uri, args.ls_username, args.ls_password)
+  client = LSClient(uri, args.ls_username, args.ls_password)
 
+  if args.display_usage or args.output_file:
     msg = "\t\tOutput will appear on the console every {} minute".format(
-            args.duration)
+      args.duration)
 
     if args.duration > 1:
-        msg += "s"
+      msg += "s"
 
     print(msg, '\n\n')
 
+  # convert the provided arguments from minutes to seconds
+  delay      = args.delay * 60
+  duration   = args.duration * 60
+  outfile    = None
+  iterations = round(duration / delay) or 1
 
-    # convert the provided arguments from minutes to seconds
-    delay = args.delay * 60
-    duration = args.duration * 60
-    outfile = None
-    iterations = round(duration / delay) or 1
+  if args.output_file:
+    with jsonstreams.Stream(jsonstreams.Type.object, filename=args.output_file) as outstream:
+      display_usage(client,
+                    iterations=iterations,
+                    delay=delay,
+                    alert_threshold=args.alert_threshold,
+                    outstream=outstream)
 
-    if args.output_file:
-        with jsonstreams.Stream(jsonstreams.Type.object, filename=args.output_file) as outstream:
-            display_usage(client,
-                          iterations=iterations,
-                          delay=delay,
-                          alert_threshold=args.alert_threshold,
-                          outstream=outstream,
-                          )
-    else:
-        display_usage(client,
-                      iterations=iterations,
-                      delay=delay,
-                      alert_threshold=args.alert_threshold,
-                      )
+  if args.display_usage:
+    display_usage(client,
+                  iterations=iterations,
+                  delay=delay,
+                  alert_threshold=args.alert_threshold)
+  else:
+    send_to_graphite(client)
