@@ -85,5 +85,6 @@ Registration Code, and the name and email address of a contact person who should
 was initially setup.
 
 
-This script takes advantage of the LLS REST APIs documented at
-```https://<address-of-ls>:<port>/documentation```
+This script takes advantage of the REST APIs documented at 
+- for LLS, ```https://<address-of-ls>:<port>/documentation```
+- for CLS, https://teradici.compliance.flexnetoperations.com/documentation/swagger-ui.html#/
