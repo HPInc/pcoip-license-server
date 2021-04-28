@@ -58,7 +58,7 @@ Required arguments:
                         (Example: 1EJD8DXUKQWQ) (2). The value can be set from the
                         environment variable: LS_URI
   --ls-username LS_USERNAME
-                        License Server Username. This is likely 'admin'. The
+                        License Server Username which is 'admin'. The
                         value for this can be set from the environment
                         variable: LS_USERNAME
   --ls-password LS_PASSWORD
