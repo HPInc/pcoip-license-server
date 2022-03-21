@@ -122,6 +122,17 @@ The value for this can be set from the environment
 variable: LS_PASSWORD
 ''', **environ_or_required("LS_PASSWORD"))
 
+parser.add_argument("--show-license-usage", help='''
+        Outputs individual license usage and exits. Outputs the results in a tablet or as json if the --json command line option is provided.
+        ''',
+        action='store_true', required=False
+)
+parser.add_argument("--json", help='''
+        Outputs results in json instead of a table
+        ''',
+        action='store_true', required=False
+)
+
 parser.add_argument("--duration", help='''Periodically query license usage 
         over the defined duration (in minutes) and output the results.
         Defaults to 4 hours. (min 120 seconds).
@@ -209,11 +220,61 @@ def display_usage(client, iterations=5, delay=1, alert_threshold=15, outstream=N
         )
 
 
+def display_licenses(client, as_json):
+    features = client.get_features()
+
+    resp = []
+
+    for feature in features:
+        if (feature["featureName"] == "Agent-Session"): 
+            license_type = 'Standard Agent'
+        if (feature["featureName"] == "Agent-Graphics"): 
+            license_type = 'Graphics Agent'
+
+        now = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+
+        item = dict()
+        item['date'] = now
+        item['id'] = feature.get('id')
+        item['licenseType'] = license_type
+        item['expiry'] = feature.get('expiry')
+        item['used'] = feature.get('used')
+        item['featureCount'] = feature.get('featureCount')
+
+        resp.append(item)
+
+    if as_json:
+        # print json
+        print(json.dumps(resp, indent=4))
+    else:
+        headers = [
+                'Date', 
+                'License Type',
+                'Total Available',
+                'Used',
+                'Expiry',
+                ]
+
+        table = [headers]
+        for row in resp:
+            table.append([
+                row['date'], row['licenseType'], row['featureCount'], row['used'], row['expiry']
+                ])
+
+        fmt = "{:>20}{:>30}{:>30}{:>30}{:>30}"
+        display_as_table(table, fmt)
+
+
 if __name__ == '__main__':
     args = parser.parse_args()
     uri = args.ls_uri
 
     client = LSClient(uri, args.ls_username, args.ls_password)
+
+
+    if args.show_license_usage:
+        display_licenses(client, as_json=args.json)
+        sys.exit(0)
 
     msg = "\t\tOutput will appear on the console every {} minute".format(
             args.duration)
