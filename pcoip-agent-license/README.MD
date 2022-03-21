@@ -42,28 +42,25 @@ usage over the Duration period
 
 optional arguments:
   -h, --help            show this help message and exit
-  --duration DURATION   Periodically query license usage over the defined
-                        duration (in minutes) and output the results. Defaults
-                        to 4 hours. (min 120 seconds).
+  --show-license-usage  Outputs individual license usage and exits. Outputs the results in a tablet or as json if the
+                        --json command line option is provided.
+  --json                Outputs results in json instead of a table
+  --duration DURATION   Periodically query license usage over the defined duration (in minutes) and output the
+                        results. Defaults to 4 hours. (min 120 seconds).
   --alert-threshold ALERT_THRESHOLD
-                        Percentage from 0-100 of used licenses available that
-                        will trigger an alert.
+                        Percentage from 0-100 of used licenses available that will trigger an alert.
   -o OUTPUT_FILE, --output-file OUTPUT_FILE
-                        Saves the results to a file. Currently the only
-                        supported format is json
+                        Saves the results to a file. Currently the only supported format is json
 
 Required arguments:
-  --ls-uri LS_URI       Local License Server URL (Example:
-                        https://10.0.1.1:7071) (1) or Cloud License Service ID
-                        (Example: 1EJD8DXUKQWQ) (2). The value can be set from the
-                        environment variable: LS_URI
+  --ls-uri LS_URI       Local License Server URL (Example: https://10.0.1.1:7071) or Cloud License Service ID
+                        (Example: 1EJD8DXUKQWQ). The value can be set from the environment variable: LS_URI
   --ls-username LS_USERNAME
-                        License Server Username which is 'admin'. The
-                        value for this can be set from the environment
-                        variable: LS_USERNAME
+                        License Server Username. This is likely 'admin'. The value for this can be set from the
+                        environment variable: LS_USERNAME
   --ls-password LS_PASSWORD
-                        License Server Password. The value for this can be set
-                        from the environment variable: LS_PASSWORD (3) (4)
+                        License Server Password. The value for this can be set from the environment variable:
+                        LS_PASSWORD
 ```
 
 (1) A warning will be printed if using http:// to communicate with Local License Server. Teradici
