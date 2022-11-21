@@ -44,6 +44,10 @@ class LSClient():
         )
         self.authenticate()
 
+    @property
+    def instances(self):
+        return f"{self.url}/api/1.0/instances/{self.cls}/"
+
     @_handle_unauthorized
     def _get(self, url, token, data=dict(), **kwargs):
         return self._session.get(url=url,
@@ -52,7 +56,7 @@ class LSClient():
 
     def authenticate(self):
         resp = self._session.post(
-            url=self.url + "/api/1.0/instances/" + self.cls + "/authorize", json=self.creds)
+            url=f"{self.instances}/authorize", json=self.creds)
 
         if not resp.status_code == 200:
             msg = ("Authentication Error: Response code: {}. "
@@ -63,9 +67,33 @@ class LSClient():
         self.token = token
         return token
 
-    def get_used_features(self):
+    def get_instances(self):
         resp = self._get(
-            url=self.url + "/api/1.0/instances/" + self.cls + "/features", token=self.token)
+            url=f"{self.instances}", token=self.token)
+        return resp.json()
+
+    def get_features(self):
+        resp = self._get(
+            url=f"{self.instances}/features", token=self.token)
+        return resp.json()
+
+    def get_feature(self, feature_id):
+        resp = self._get(
+            url=f"{self.instances}/features/{feature_id}", token=self.token)
+        return resp.json()
+
+    def get_usage(self, feature_id):
+        resp = self._get(
+            url=f"{self.instances}/features/{feature_id}/clients", token=self.token)
+        return resp.json()
+
+    def get_reservation_groups(self):
+        resp = self._get(
+            url=f"{self.instances}/reservationgroups", token=self.token)
+        return resp.json()
+
+    def get_used_features(self):
+        features = self.get_features()
 
         rd = {
             "standard": {
@@ -78,12 +106,13 @@ class LSClient():
             }
         }
 
-        for item in resp.json():
+        for item in features:
             if (item["featureName"] == "Agent-Session"):
-                rd["standard"]["count"] += item["featureCount"]
-                rd["standard"]["used"] += item["used"]
+                license_type = 'standard'
             elif (item["featureName"] == "Agent-Graphics"):
-                rd["graphics"]["count"] += item["featureCount"]
-                rd["graphics"]["used"] += item["used"]
+                license_type = 'graphics'
+
+            rd[license_type]["count"] += item["featureCount"]
+            rd[license_type]["used"] += item["used"]
 
         return rd
