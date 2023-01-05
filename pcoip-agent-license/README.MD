@@ -37,7 +37,7 @@ usage: pcoip-agent-ls.py [-h] --ls-uri LS_URI [--ls-username LS_USERNAME]
                          [--ls-password LS_PASSWORD] [--duration DURATION]
                          [--alert-threshold ALERT_THRESHOLD] [-o OUTPUT_FILE]
 
-This script displays the maximum Cloud Access Software license concurrent
+This script displays the maximum HP Anyware license concurrent
 usage over the Duration period
 
 optional arguments:
