@@ -1,4 +1,4 @@
-Copyright (c) 2020 Teradici Corporation
+Copyright Teradici Corporation 2020;  © Copyright 2023 HP Development Company, L.P.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
