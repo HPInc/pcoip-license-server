@@ -88,7 +88,7 @@ def environ_or_required(key):
     return rv
 
 parser = argparse.ArgumentParser(description='''
-This script displays the maximum Cloud Access Software license concurrent usage over the Duration
+This script displays the maximum HP Anyware license concurrent usage over the Duration
 period
 ''')
 
