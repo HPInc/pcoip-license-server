@@ -2,10 +2,10 @@
 
 | DISCLAIMER |
 | --- |
-| This script is provided as-is and is not supported by Teradici. It is intended to provide a reference for accessing the License Server (LS) or Cloud License Service (CLS) APIs. Please report any issues via github. |
+| This script is provided as-is and is not supported by HP Teradici. It is intended to provide a reference for accessing the License Server (LS) or Cloud License Service (CLS) APIs. Please report any issues via github. |
 
 
-Tool that displays the maximum Cloud Access Software license concurrent usage over time.
+Tool that displays the maximum HP Anyware license concurrent usage over time.
 Once the tool is started, it will continue to run and output results until terminated.
 
 
@@ -63,18 +63,18 @@ Required arguments:
                         LS_PASSWORD
 ```
 
-(1) A warning will be printed if using http:// to communicate with Local License Server. Teradici
+(1) A warning will be printed if using http:// to communicate with Local License Server. HP Teradici
 highly recommends communicating over secure connections (https://). See License Server
 Administration Guide "How to enable HTTPS/TLS for PCoIP License Server" at
 https://help.teradici.com.
 
 (2) To get your Cloud License Service ID, this is the first part (left of the @) in the
-Registration Code you received from Teradici. For example, if the Registration Code is
+Registration Code you received from HP Teradici. For example, if the Registration Code is
 XXXXXXX@YYYY-YYYY-YYYY-YYYY, the Cloud License Service ID will be XXXXXXX.
 
 (3) To set the Cloud License Service password, do the following:
 1. Log into https://teradici.flexnetoperations.com. To request access, create a case with
-[Teradici support](https://help.teradici.com/s/contactsupport). Be prepared to provide a valid
+[HP Teradici support](https://help.teradici.com/s/contactsupport). Be prepared to provide a valid
 Registration Code, and the name and email address of a contact person who should have access.
 2. Go to "Served Licenses" -> "License Server" -> \<your CLS ID\> -> "Set Password".
 
