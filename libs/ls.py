@@ -1,7 +1,6 @@
 from requests.packages.urllib3.util import Retry
 from requests.adapters import HTTPAdapter
-from requests import Session, exceptions
-
+import requests
 
 def _handle_unauthorized(func):
     '''
@@ -38,7 +37,7 @@ class LSClient():
             "password": password,
             "user": username,
         }
-        self._session = Session()
+        self._session = requests.Session()
         self._session.mount(self.url, HTTPAdapter(
             max_retries=Retry(total=3, status_forcelist=[500, 503, 502]))
         )
@@ -46,7 +45,7 @@ class LSClient():
 
     @property
     def instances(self):
-        return f"{self.url}/api/1.0/instances/{self.cls}/"
+        return f"{self.url}/api/1.0/instances/{self.cls}"
 
     @_handle_unauthorized
     def _get(self, url, token, data=dict(), **kwargs):
@@ -55,8 +54,9 @@ class LSClient():
                             params=data)
 
     def authenticate(self):
+        url = f"{self.instances}/authorize"
         resp = self._session.post(
-            url=f"{self.instances}/authorize", json=self.creds)
+            url=url, json=self.creds)
 
         if not resp.status_code == 200:
             msg = ("Authentication Error: Response code: {}. "
