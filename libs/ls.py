@@ -45,7 +45,7 @@ class LSClient():
 
     @property
     def instances(self):
-        return f"{self.url}/api/1.0/instances/{self.cls}/"
+        return f"{self.url}/api/1.0/instances/{self.cls}"
 
     @_handle_unauthorized
     def _get(self, url, token, data=dict(), **kwargs):
