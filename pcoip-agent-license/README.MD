@@ -84,4 +84,4 @@ was initially setup.
 
 This script takes advantage of the REST APIs documented at 
 - for LS, ```https://<address-of-ls>:<port>/documentation```
-- for CLS, https://teradici.compliance.flexnetoperations.com/documentation/swagger-ui.html#/
+- for CLS, https://teradici.compliance.flexnetoperations.com/GlobalLicensingService/swagger-ui/index.html
