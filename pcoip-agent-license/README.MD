@@ -2,7 +2,7 @@
 
 | DISCLAIMER |
 | --- |
-| This script is provided as-is and is not supported by HP Teradici. It is intended to provide a reference for accessing the License Server (LS) or Cloud License Service (CLS) APIs. Please report any issues via github. |
+| This script is provided as-is. It is intended to provide a reference for accessing the License Server (LS) or Cloud License Service (CLS) APIs. Please report any issues via github. |
 
 
 Tool that displays the maximum HP Anyware license concurrent usage over time.
@@ -85,3 +85,4 @@ was initially setup.
 This script takes advantage of the REST APIs documented at 
 - for LS, ```https://<address-of-ls>:<port>/documentation```
 - for CLS, https://teradici.compliance.flexnetoperations.com/GlobalLicensingService/swagger-ui/index.html
+
